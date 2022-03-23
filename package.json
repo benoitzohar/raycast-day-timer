@@ -3,22 +3,38 @@
   "name": "day-timer",
   "title": "Day Timer",
   "description": "Count the time per day/week you spent on a project.\nSimply start the timer when you begin and stop when you're done.",
-  "icon": "command-icon.png",
+  "icon": "app-icon.png",
   "author": "benoitzohar",
   "license": "MIT",
   "commands": [
     {
-      "name": "index",
-      "title": "Show List and Detail",
-      "subtitle": "Record the time you spend",
+      "name": "showTimers",
+      "title": "Show Timers",
+      "subtitle": "Display all timers",
       "description": "Record the time you spend per day/week on a project.",
       "mode": "view"
+    },
+    {
+      "name": "startTimer",
+      "title": "Start Timer",
+      "subtitle": "Start a timer",
+      "description": "Record the time you spend per day/week on a project.",
+      "mode": "no-view"
+    },
+    {
+      "name": "stopTimer",
+      "title": "Stop Timer",
+      "subtitle": "Stop a timer",
+      "description": "Record the time you spend per day/week on a project.",
+      "mode": "no-view"
     }
   ],
   "dependencies": {
-    "@raycast/api": "^1.30.3"
+    "@raycast/api": "^1.30.3",
+    "luxon": "^2.3.1"
   },
   "devDependencies": {
+    "@types/luxon": "^2.3.1",
     "@types/node": "~16.10.0",
     "@types/react": "^17.0.28",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
