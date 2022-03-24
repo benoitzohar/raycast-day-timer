@@ -109,7 +109,7 @@ export function formatSecondsToDisplay(seconds: number) {
   if (hours === 0) {
     return `${minutes} minute${minutes > 1 ? "s" : ""}`;
   }
-  return `${hours} hour${hours > 1 ? "s" : ""} and ${minutes} minute${minutes > 1 ? "s" : ""}`;
+  return `${hours} hour${hours > 1 ? "s" : ""}${minutes > 0 ? ` and ${minutes} minute${minutes > 1 ? "s" : ""}` : ""}`;
 }
 
 export function useInterval(callback: () => void, delay: number | null) {

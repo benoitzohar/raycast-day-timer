@@ -1,9 +1,18 @@
 import { ActionPanel, Detail, List, Action, Icon } from "@raycast/api";
+import { wrapImageIfNeeded } from "@raycast/api/types/api/internal";
 import { DateTime } from "luxon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CurrentTimerListItem from "./components/CurrentTimerListItem";
 import TimerList from "./components/TimerList";
-import { formatSecondsToDisplay, getCurrentTimer, getTimerDurationInSeconds, getTimers, useInterval } from "./helpers";
+import {
+  createTimer,
+  formatSecondsToDisplay,
+  getCurrentTimer,
+  getTimerDurationInSeconds,
+  getTimers,
+  updateTimer,
+  useInterval,
+} from "./helpers";
 import { Timer } from "./types";
 
 interface Row {
@@ -35,18 +44,22 @@ export default function ShowTimers() {
   const updateDisplay = useCallback(() => {
     const weeks = weeksRef.current ?? [];
     const rows: Row[] = weeks.reduce((acc, week) => {
+      const now = DateTime.local();
       acc.push({
         isDay: false,
-        title: `Week ${week.datetime.weekNumber}`,
-        subtitle: `Total for the week: ${formatSecondsToDisplay(week.sum)}`,
+        title:
+          week.datetime.weekNumber === now.weekNumber && week.datetime.year === now.year
+            ? "This week"
+            : `Week ${week.datetime.weekNumber}`,
+        subtitle: `Total: ${formatSecondsToDisplay(week.sum)}`,
         accessoryTitle: "",
       });
 
       week.days.forEach((day) => {
         acc.push({
           isDay: true,
-          title: `        ${day.datetime.toFormat("dd LLL")}`,
-          subtitle: `Total: ${formatSecondsToDisplay(week.sum)}`,
+          title: `        ${day.datetime.toFormat("cccc dd LLL")}`,
+          subtitle: `${formatSecondsToDisplay(day.sum)}`,
           accessoryTitle: `${day.timers.length} timer${day.timers.length > 1 ? "s" : ""}`,
           timers: day.timers,
         });
@@ -62,9 +75,11 @@ export default function ShowTimers() {
   const readTimers = useCallback(async () => {
     const timers = await getTimers();
 
-    const days: { [k: string]: Day } = timers.reduce((acc, timer) => {
+    const orderedTimers = timers.sort((a, b) => (a.start > b.start ? -1 : 1));
+
+    const days: { [k: string]: Day } = orderedTimers.reduce((acc, timer) => {
       const day = timer.start.toFormat("yyyy-MM-dd");
-      const week = timer.start.toFormat("yyyy-ww");
+      const week = timer.start.toFormat("W");
       if (!acc[day]) {
         acc[day] = {
           datetime: timer.start,
@@ -93,7 +108,7 @@ export default function ShowTimers() {
       return acc;
     }, {} as { [k: string]: Week });
 
-    weeksRef.current = Object.values(weeks);
+    weeksRef.current = Object.values(weeks).sort((a, b) => (a.datetime > b.datetime ? -1 : 1));
     setCurrentTimer((await getCurrentTimer(timers)) ?? null);
     updateDisplay();
   }, []);

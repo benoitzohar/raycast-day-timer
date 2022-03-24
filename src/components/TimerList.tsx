@@ -1,5 +1,4 @@
 import { Action, ActionPanel, Alert, confirmAlert, Icon, List } from "@raycast/api";
-import { time } from "console";
 import { useState } from "react";
 import { deleteTimer, formatSecondsToDisplay, getTimerDurationInSeconds } from "../helpers";
 import { Timer } from "../types";
@@ -25,33 +24,35 @@ export default function TimerList({ timers, onUpdate }: Props) {
 
   return (
     <List>
-      {localTimers.map((timer, idx) => (
-        <List.Item
-          key={timer.id}
-          title={timer.start.toRelative() ?? ""}
-          subtitle={formatSecondsToDisplay(getTimerDurationInSeconds(timer))}
-          accessoryIcon={!timer.end ? "app-icon.png" : undefined}
-          actions={
-            timer.end && (
-              <ActionPanel>
-                <Action.Push title="Edit timer" target={<EditTimer timer={timer} onUpdate={onUpdate} />} />
-                <Action
-                  title="Delete timer"
-                  onAction={async () => {
-                    if (await confirmAlert(deleteAlertOptions)) {
-                      await deleteTimer(timer.id);
-                      const newTimers = [...localTimers];
-                      newTimers.splice(idx, 1);
-                      setLocalTimers(newTimers);
-                      onUpdate();
-                    }
-                  }}
-                />
-              </ActionPanel>
-            )
-          }
-        />
-      ))}
+      <List.Section title={localTimers[0].start.toFormat("cccc dd LLL") ?? ""}>
+        {localTimers.map((timer, idx) => (
+          <List.Item
+            key={timer.id}
+            title={timer.start.toFormat("t") ?? ""}
+            subtitle={formatSecondsToDisplay(getTimerDurationInSeconds(timer))}
+            accessoryIcon={!timer.end ? "app-icon.png" : undefined}
+            actions={
+              timer.end && (
+                <ActionPanel>
+                  <Action.Push title="Edit timer" target={<EditTimer timer={timer} onUpdate={onUpdate} />} />
+                  <Action
+                    title="Delete timer"
+                    onAction={async () => {
+                      if (await confirmAlert(deleteAlertOptions)) {
+                        await deleteTimer(timer.id);
+                        const newTimers = [...localTimers];
+                        newTimers.splice(idx, 1);
+                        setLocalTimers(newTimers);
+                        onUpdate();
+                      }
+                    }}
+                  />
+                </ActionPanel>
+              )
+            }
+          />
+        ))}
+      </List.Section>
     </List>
   );
 }
