@@ -1,6 +1,10 @@
 import { LocalStorage } from "@raycast/api";
 import { randomUUID } from "crypto";
+import { access } from "fs";
+import { writeFile } from "fs/promises";
 import { DateTime } from "luxon";
+import { homedir } from "os";
+import { join } from "path";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { StorageKey, Timer } from "./types";
 
@@ -37,6 +41,77 @@ export async function getCurrentTimer(timers?: Timer[]) {
       start: DateTime.fromISO(rawTimer.start),
     };
   }
+}
+export interface Day {
+  datetime: DateTime;
+  week: string;
+  sum: number;
+  timers: Timer[];
+}
+export interface Week {
+  datetime: DateTime;
+  year: string;
+  sum: number;
+  days: Day[];
+}
+export interface Year {
+  datetime: DateTime;
+  sum: number;
+  weeks: Week[];
+}
+
+export async function getTimersPerYear(timers: Timer[]) {
+  const orderedTimers = timers.sort((a, b) => (a.start > b.start ? -1 : 1));
+
+  const days: { [k: string]: Day } = orderedTimers.reduce((acc, timer) => {
+    const day = timer.start.toFormat("yyyy-MM-dd");
+    const week = timer.start.toFormat("W");
+    if (!acc[day]) {
+      acc[day] = {
+        datetime: timer.start,
+        week,
+        sum: getTimerDurationInSeconds(timer),
+        timers: [timer],
+      };
+    } else {
+      acc[day].sum += getTimerDurationInSeconds(timer);
+      acc[day].timers.push(timer);
+    }
+    return acc;
+  }, {} as { [k: string]: Day });
+
+  const weeks: { [k: string]: Week } = Object.values(days).reduce((acc, day) => {
+    if (!acc[day.week]) {
+      acc[day.week] = {
+        datetime: day.datetime.startOf("week"),
+        year: day.datetime.toFormat("yyyy"),
+        sum: day.sum,
+        days: [day],
+      };
+    } else {
+      acc[day.week].sum += day.sum;
+      acc[day.week].days.push(day);
+    }
+    return acc;
+  }, {} as { [k: string]: Week });
+
+  const years = Object.values(weeks)
+    .sort((a, b) => (a.datetime > b.datetime ? -1 : 1))
+    .reduce((acc, week) => {
+      if (!acc[week.year]) {
+        acc[week.year] = {
+          datetime: week.datetime.startOf("year"),
+          sum: week.sum,
+          weeks: [week],
+        };
+      } else {
+        acc[week.year].sum += week.sum;
+        acc[week.year].weeks.push(week);
+      }
+      return acc;
+    }, {} as { [k: string]: Year });
+
+  return Object.values(years).sort((a, b) => (a.datetime > b.datetime ? -1 : 1));
 }
 
 export async function createTimer(start?: DateTime) {
@@ -131,4 +206,41 @@ export function useInterval(callback: () => void, delay: number | null) {
 
     return () => clearInterval(id);
   }, [delay]);
+}
+
+export async function getTimersAsJSON(years: Year[]): Promise<string> {
+  const result = years.reduce((accYear, year) => {
+    const yearStr = `${year.datetime.year}`;
+
+    accYear[yearStr] = {
+      sum: formatSecondsToDisplay(year.sum),
+      ...year.weeks.reduce((accWeek, week) => {
+        const weekStr = `${week.datetime.toFormat("LLL dd")} to ${week.datetime.endOf("week").toFormat("LLL dd")}`;
+        accWeek[weekStr] = {
+          sum: formatSecondsToDisplay(week.sum),
+          ...week.days.reduce((accDay, day) => {
+            const dayStr = `${day.datetime.toFormat("LLL dd")}`;
+            accDay[dayStr] = {
+              sum: formatSecondsToDisplay(day.sum),
+              timers: day.timers.map((timer) => ({
+                from: timer.start,
+                to: timer.end,
+                duration: formatSecondsToDisplay(getTimerDurationInSeconds(timer)),
+              })),
+            };
+            return accDay;
+          }, {} as { [k: string]: unknown }),
+        };
+        return accWeek;
+      }, {} as { [k: string]: unknown }),
+    };
+    return accYear;
+  }, {} as { [k: string]: unknown });
+
+  return JSON.stringify(result, null, 2);
+}
+
+export async function writeFileInDownloads(fileName: string, content: string) {
+  const file = join(homedir(), "Downloads", fileName);
+  await writeFile(file, content);
 }
