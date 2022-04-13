@@ -2,11 +2,11 @@ import { ActionPanel, Detail, List, Action, Icon, showHUD } from "@raycast/api";
 import { DateTime } from "luxon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CurrentTimerListItem from "./components/CurrentTimerListItem";
+import Stats from "./components/Stats";
 import TimerList from "./components/TimerList";
 import {
   formatSecondsToDisplay,
   getCurrentTimer,
-  getTimerDurationInSeconds,
   getTimers,
   getTimersAsJSON,
   getTimersPerYear,
@@ -128,6 +128,12 @@ export default function ShowTimers() {
               </ActionPanel>
             ) : row.isYear ? (
               <ActionPanel>
+                <Action.Push
+                  title="Show statistics for the year"
+                  target={
+                    <Stats year={yearsRef.current.find((y) => y.datetime.year.toString() === row.title) as Year} />
+                  }
+                />
                 <Action title="Export as JSON" onAction={exportJSON} />
               </ActionPanel>
             ) : undefined

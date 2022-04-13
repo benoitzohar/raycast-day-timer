@@ -1,6 +1,5 @@
 import { LocalStorage } from "@raycast/api";
 import { randomUUID } from "crypto";
-import { access } from "fs";
 import { writeFile } from "fs/promises";
 import { DateTime } from "luxon";
 import { homedir } from "os";
