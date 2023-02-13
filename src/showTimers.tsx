@@ -1,4 +1,4 @@
-import { ActionPanel, Detail, List, Action, Icon, showHUD } from "@raycast/api";
+import { ActionPanel, Detail, List, Action, Icon, showHUD, getPreferenceValues } from "@raycast/api";
 import { DateTime } from "luxon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import CurrentTimerListItem from "./components/CurrentTimerListItem";
@@ -41,7 +41,7 @@ export default function ShowTimers() {
         isYear: true,
         isDay: false,
         title: `${year.datetime.year}`,
-        subtitle: "",
+        subtitle: `${year.average ? ` (Average per week: ${formatSecondsToDisplay(year.average)})` : ""}`,
         accessoryTitle: "",
       });
 
@@ -52,7 +52,9 @@ export default function ShowTimers() {
             week.datetime.weekNumber === now.weekNumber && week.datetime.year === now.year
               ? "This week"
               : `Week ${week.datetime.weekNumber}`,
-          subtitle: `Total: ${formatSecondsToDisplay(week.sum)}`,
+          subtitle: `Total: ${formatSecondsToDisplay(week.sum)}${
+            week.left ? ` (${formatSecondsToDisplay(week.left)} left)` : ""
+          }`,
           accessoryTitle: "",
         });
 

@@ -1,4 +1,4 @@
-import { LocalStorage } from "@raycast/api";
+import { getPreferenceValues, LocalStorage } from "@raycast/api";
 import { randomUUID } from "crypto";
 import { writeFile } from "fs/promises";
 import { DateTime } from "luxon";
@@ -52,14 +52,22 @@ export interface Week {
   year: string;
   sum: number;
   days: Day[];
+  left?: number;
 }
 export interface Year {
   datetime: DateTime;
   sum: number;
   weeks: Week[];
+  average: number;
+}
+
+interface Preferences {
+  weekTarget?: string;
 }
 
 export async function getTimersPerYear(timers: Timer[]) {
+  const { weekTarget } = getPreferenceValues<Preferences>();
+  const weekTargetInSeconds = weekTarget ? parseInt(weekTarget, 10) * 60 * 60 : null;
   const orderedTimers = timers.sort((a, b) => (a.start > b.start ? -1 : 1));
 
   const days: { [k: string]: Day } = orderedTimers.reduce((acc, timer) => {
@@ -94,6 +102,18 @@ export async function getTimersPerYear(timers: Timer[]) {
     return acc;
   }, {} as { [k: string]: Week });
 
+  if (weekTargetInSeconds) {
+    Object.keys(weeks).forEach((week) => {
+      const left = weekTargetInSeconds - weeks[week].sum;
+      if (left > 0) {
+        weeks[week] = {
+          ...weeks[week],
+          left,
+        };
+      }
+    });
+  }
+
   const years = Object.values(weeks)
     .sort((a, b) => (a.datetime > b.datetime ? -1 : 1))
     .reduce((acc, week) => {
@@ -102,6 +122,7 @@ export async function getTimersPerYear(timers: Timer[]) {
           datetime: week.datetime.startOf("year"),
           sum: week.sum,
           weeks: [week],
+          average: 0,
         };
       } else {
         acc[week.year].sum += week.sum;
@@ -109,6 +130,10 @@ export async function getTimersPerYear(timers: Timer[]) {
       }
       return acc;
     }, {} as { [k: string]: Year });
+
+  Object.keys(years).forEach((year) => {
+    years[year].average = years[year].sum / years[year].weeks.length;
+  });
 
   return Object.values(years).sort((a, b) => (a.datetime > b.datetime ? -1 : 1));
 }

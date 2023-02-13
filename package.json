@@ -6,6 +6,16 @@
   "icon": "app-icon.png",
   "author": "benoitzohar",
   "license": "MIT",
+  "preferences": [
+    {
+      "name": "weekTarget",
+      "description": "The target number of hours you want to work per week",
+      "type": "textfield",
+      "required": false,
+      "title": "Week Target (in hours)",
+      "placeholder": "40"
+    }
+  ],
   "commands": [
     {
       "name": "showTimers",
