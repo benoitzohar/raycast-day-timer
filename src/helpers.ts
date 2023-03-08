@@ -132,7 +132,14 @@ export async function getTimersPerYear(timers: Timer[]) {
     }, {} as { [k: string]: Year });
 
   Object.keys(years).forEach((year) => {
-    years[year].average = years[year].sum / years[year].weeks.length;
+    const firstWeek = years[year].weeks[years[year].weeks.length - 1];
+    const lastWeek = DateTime.now().startOf("week");
+    if (firstWeek && lastWeek && firstWeek.datetime.weekNumber < lastWeek.weekNumber) {
+      years[year].average =
+        (years[year].sum -
+          (years[year].weeks[0].datetime.weekNumber === lastWeek.weekNumber ? years[year].weeks[0].sum : 0)) /
+        (lastWeek.weekNumber - firstWeek.datetime.weekNumber);
+    }
   });
 
   return Object.values(years).sort((a, b) => (a.datetime > b.datetime ? -1 : 1));
