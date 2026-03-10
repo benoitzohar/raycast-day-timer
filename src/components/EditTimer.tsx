@@ -1,4 +1,4 @@
-import { Form, ActionPanel, Action, showHUD, useNavigation, showToast, Toast } from "@raycast/api";
+import { Form, ActionPanel, Action, useNavigation, showToast, Toast } from "@raycast/api";
 import { DateTime } from "luxon";
 import { useCallback } from "react";
 import { updateTimer } from "../helpers";

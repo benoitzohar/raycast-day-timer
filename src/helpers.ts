@@ -59,6 +59,7 @@ export interface Year {
   sum: number;
   weeks: Week[];
   average: number;
+  averageExceptCurrentWeek: number;
 }
 
 interface Preferences {
@@ -123,6 +124,7 @@ export async function getTimersPerYear(timers: Timer[]) {
           sum: week.sum,
           weeks: [week],
           average: 0,
+          averageExceptCurrentWeek: 0,
         };
       } else {
         acc[week.year].sum += week.sum;
@@ -132,13 +134,16 @@ export async function getTimersPerYear(timers: Timer[]) {
     }, {} as { [k: string]: Year });
 
   Object.keys(years).forEach((year) => {
-    const firstWeek = years[year].weeks[years[year].weeks.length - 1];
-    const lastWeek = DateTime.now().startOf("week");
-    if (firstWeek && lastWeek && firstWeek.datetime.weekNumber < lastWeek.weekNumber) {
-      years[year].average =
-        (years[year].sum -
-          (years[year].weeks[0].datetime.weekNumber === lastWeek.weekNumber ? years[year].weeks[0].sum : 0)) /
-        (lastWeek.weekNumber - firstWeek.datetime.weekNumber);
+    const currentYear = years[year];
+    const firstWeek = currentYear.weeks[currentYear.weeks.length - 1];
+    const thisWeek = DateTime.now().startOf("week");
+    if (firstWeek.datetime.weekNumber < thisWeek.weekNumber) {
+      const numberOfWeeks = thisWeek.weekNumber - firstWeek.datetime.weekNumber;
+      currentYear.average = currentYear.sum / (numberOfWeeks + 1);
+      currentYear.averageExceptCurrentWeek =
+        (currentYear.sum -
+          (currentYear.weeks[0].datetime.weekNumber === thisWeek.weekNumber ? currentYear.weeks[0].sum : 0)) /
+        numberOfWeeks;
     }
   });
 

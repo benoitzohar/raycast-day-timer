@@ -41,7 +41,13 @@ export default function ShowTimers() {
         isYear: true,
         isDay: false,
         title: `${year.datetime.year}`,
-        subtitle: `${year.average ? ` (Average per week: ${formatSecondsToDisplay(year.average)})` : ""}`,
+        subtitle: `${
+          year.average
+            ? ` (Average per week: ${formatSecondsToDisplay(
+                year.average
+              )}, excl. current week: ${formatSecondsToDisplay(year.averageExceptCurrentWeek)})`
+            : ""
+        }`,
         accessoryTitle: "",
       });
 
